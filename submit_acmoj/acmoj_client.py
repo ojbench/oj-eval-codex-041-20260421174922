@@ -100,6 +100,13 @@ class ACMOJClient:
 
         return result
 
+    def submit_code(self, problem_id: int, language: str, code_text: str) -> Optional[Dict]:
+        data = {"language": language, "code": code_text}
+        result = self._make_request("POST", f"/problem/{problem_id}/submit", data=data)
+        if result and 'id' in result:
+            self._save_submission_id(result['id'])
+        return result
+
     def get_submission_detail(self, submission_id: int) -> Optional[Dict]:
         return self._make_request("GET", f"/submission/{submission_id}")
 
@@ -114,7 +121,7 @@ def main():
     
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # Submit Git repository URL (preferred for this assignment)
+    # Submit Git repository URL (preferred for some assignments)
     submit_git_parser = subparsers.add_parser("submit_git", help="Submit via Git repository URL")
     submit_git_parser.add_argument("--problem-id", type=int, required=True, help="Problem ID")
     submit_git_parser.add_argument("--git-url", type=str, required=False,
@@ -137,7 +144,20 @@ def main():
 
     client = ACMOJClient(args.token)
 
-    if args.command == "submit_git":
+    if args.command == "submit":
+        try:
+            with open(args.code_file, 'r', encoding='utf-8') as f:
+                code_text = f.read()
+        except FileNotFoundError:
+            print(f"Error: Code file not found at {args.code_file}")
+            exit(1)
+        except Exception as e:
+            print(f"Error: Failed to read code file: {e}")
+            exit(1)
+
+        result = client.submit_code(args.problem_id, args.language, code_text)
+
+    elif args.command == "submit_git":
         git_url = args.git_url
         if not git_url:
             # Attempt to auto-detect from local repo origin
