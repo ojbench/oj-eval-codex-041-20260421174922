@@ -121,6 +121,14 @@ def main():
     
     subparsers = parser.add_subparsers(dest="command", required=True)
 
+    # Submit C++/C source text
+    submit_parser = subparsers.add_parser("submit", help="Submit source text (e.g., cpp)")
+    submit_parser.add_argument("--problem-id", type=int, required=True, help="Problem ID")
+    submit_parser.add_argument("--language", type=str, required=True,
+                               help="Programming language (e.g., cpp, c)")
+    submit_parser.add_argument("--code-file", type=str, required=True,
+                               help="Path to the source code file")
+
     # Submit Git repository URL (preferred for some assignments)
     submit_git_parser = subparsers.add_parser("submit_git", help="Submit via Git repository URL")
     submit_git_parser.add_argument("--problem-id", type=int, required=True, help="Problem ID")
