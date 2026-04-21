@@ -84,6 +84,15 @@ class ACMOJClient:
             print(f"⚠️ Warning: Failed to save submission ID: {e}")
 
     def submit_git(self, problem_id: int, git_url: str) -> Optional[Dict]:
+        # Sanitize potential embedded credentials in URL
+        try:
+            from urllib.parse import urlsplit, urlunsplit
+            parts = urlsplit(git_url)
+            if parts.username or parts.password:
+                git_url = urlunsplit((parts.scheme, parts.hostname + (":"+str(parts.port) if parts.port else ""), parts.path, parts.query, parts.fragment))
+        except Exception:
+            pass
+
         data = {"language": "git", "code": git_url}
         result = self._make_request("POST", f"/problem/{problem_id}/submit", data=data)
         if result and 'id' in result:
