@@ -1,4 +1,5 @@
 #include <bits/stdc++.h>
+#include "map.hpp"
 using namespace std;
 
 /*
@@ -25,7 +26,7 @@ int main() {
     ios::sync_with_stdio(false);
     cin.tie(nullptr);
 
-    map<long long, long long> mp;
+    sjtu::map<long long, long long> mp;
     string op;
     if (!cin.good()) return 0;
     while (cin >> op) {
@@ -60,4 +61,3 @@ int main() {
     }
     return 0;
 }
-

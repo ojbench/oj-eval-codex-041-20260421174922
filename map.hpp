@@ -62,7 +62,7 @@ private:
         x->parent = y;
     }
 
-    Node *bst_insert(const Key &k, const T *val_opt, uint32_t pr) {
+    sjtu::pair<Node*, bool> bst_insert(const Key &k, const T *val_opt, uint32_t pr) {
         Node *cur = root, *par = nullptr;
         while (cur) {
             par = cur;
@@ -71,7 +71,7 @@ private:
             else {
                 // key exists: update value if provided
                 if (val_opt) cur->data.second = *val_opt;
-                return cur;
+                return {cur, false};
             }
         }
         Node *n = val_opt ? new Node(k, *val_opt, pr) : new Node(k, pr);
@@ -79,7 +79,7 @@ private:
         if (!par) root = n;
         else if (comp(k, par->data.first)) par->left = n; else par->right = n;
         ++sz;
-        return n;
+        return {n, true};
     }
 
     void treap_fixup(Node *n) {
@@ -257,32 +257,18 @@ public:
 
     T &operator[](const Key &k) {
         uint32_t pr = rng();
-        Node *n = bst_insert(k, nullptr, pr);
-        // If new node, it had default-constructed value; fixup only if it was actually inserted
-        // We detect insertion by checking if both children/parent connections were set during bst_insert
-        // Simpler: if value exists, bst_insert returns existing node; we can check by searching
-        Node *ex = n;
-        // To detect existing, run find_node; but that is equal to n; we need a flag.
-        // Instead: try to insert with val_opt and see if value changed; We'll handle fixup by checking heap violation
-        while (ex->parent && ex->parent->prio > ex->prio) {
-            if (ex->parent->right == ex) rotate_left(ex->parent);
-            else rotate_right(ex->parent);
-        }
+        auto pr_ins = bst_insert(k, nullptr, pr);
+        Node *n = pr_ins.first;
+        if (pr_ins.second) treap_fixup(n);
         return n->data.second;
     }
 
     sjtu::pair<iterator, bool> insert(const value_type &val) {
         uint32_t pr = rng();
-        Node *n = bst_insert(val.first, &val.second, pr);
-        bool inserted = true;
-        // If key existed, bst_insert returned existing node and did not increase size
-        // We can detect by comparing stored value after update versus provided value
-        if (n->data.first == val.first && n->data.second == val.second) {
-            // still may be existing; to be precise, if size didn't change
-            inserted = false; // conservative: report false on update
-        }
-        if (inserted) treap_fixup(n);
-        return sjtu::pair<iterator, bool>(iterator(n, this), inserted);
+        auto pr_ins = bst_insert(val.first, &val.second, pr);
+        Node *n = pr_ins.first;
+        if (pr_ins.second) treap_fixup(n);
+        return sjtu::pair<iterator, bool>(iterator(n, this), pr_ins.second);
     }
 
     size_t count(const Key &k) const { return find_node(k) ? 1 : 0; }
@@ -300,4 +286,3 @@ public:
 } // namespace sjtu
 
 #endif // SJTU_MAP_HPP
-
